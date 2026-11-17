@@ -94,11 +94,11 @@ button{font:inherit;color:inherit}
 /* ---------------- Pinned sequences (My works + Music) ---------------- */
 .pin{position:relative;height:calc(var(--n) * 85vh + 100vh)}
 /* My story: a new chapter every ~third of a screen of scrolling */
-#story{height:calc(var(--n) * 36vh + 100vh)}
-.story-ui .slide-up{animation:storyUp .65s cubic-bezier(.2,.75,.2,1) both}
-.story-ui .slide-down{animation:storyDown .65s cubic-bezier(.2,.75,.2,1) both}
-.story-inset.slide-up,.story-inset.slide-down{animation-delay:.06s}
-.story-right.slide-up,.story-right.slide-down{animation-delay:.12s}
+#story{height:calc(var(--n) * 20vh + 100vh)}
+.story-ui .slide-up{animation:storyUp .38s cubic-bezier(.2,.75,.2,1) both}
+.story-ui .slide-down{animation:storyDown .38s cubic-bezier(.2,.75,.2,1) both}
+.story-inset.slide-up,.story-inset.slide-down{animation-delay:.03s}
+.story-right.slide-up,.story-right.slide-down{animation-delay:.06s}
 @keyframes storyUp{from{opacity:0;transform:translateY(70px)}to{opacity:1;transform:none}}
 @keyframes storyDown{from{opacity:0;transform:translateY(-70px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.story-ui .slide-up,.story-ui .slide-down{animation:none}}
