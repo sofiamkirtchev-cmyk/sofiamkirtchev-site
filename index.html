@@ -93,15 +93,12 @@ button{font:inherit;color:inherit}
 
 /* ---------------- Pinned sequences (My works + Music) ---------------- */
 .pin{position:relative;height:calc(var(--n) * 85vh + 100vh)}
-/* My story: a new chapter every ~third of a screen of scrolling */
-#story{height:calc(var(--n) * 20vh + 100vh)}
-.story-ui .slide-up{animation:storyUp .38s cubic-bezier(.2,.75,.2,1) both}
-.story-ui .slide-down{animation:storyDown .38s cubic-bezier(.2,.75,.2,1) both}
-.story-inset.slide-up,.story-inset.slide-down{animation-delay:.03s}
-.story-right.slide-up,.story-right.slide-down{animation-delay:.06s}
-@keyframes storyUp{from{opacity:0;transform:translateY(70px)}to{opacity:1;transform:none}}
-@keyframes storyDown{from{opacity:0;transform:translateY(-70px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.story-ui .slide-up,.story-ui .slide-down{animation:none}}
+/* My story: pages slide in from the right like a book, tied to the scroll */
+#story{height:calc((var(--n) - 1) * 55vh + 100vh)}
+.story-book{position:absolute;inset:0;perspective:1800px;overflow:hidden}
+.story-page{position:absolute;inset:0;transform-origin:0 50%;will-change:transform;backface-visibility:hidden;box-shadow:-30px 0 70px rgba(0,0,0,.45)}
+.story-page:first-child{box-shadow:none}
+.story-shade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:3}
 .pin-stage{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;height:100svh;overflow:hidden}
 
 /* My works: category tabs, large lead image + copy, filmstrip running off the bottom */
@@ -181,7 +178,7 @@ button{font:inherit;color:inherit}
 .story-ticks{display:flex;gap:6px;justify-content:flex-end}
 .story-ticks i{width:22px;height:2px;background:rgba(247,242,228,.35)}
 .story-ticks i.on{background:#F7F2E4}
-.story-section-label{position:absolute;left:var(--gut-l);top:24px;color:#F7F2E4;z-index:2}
+.story-section-label{position:absolute;left:var(--gut-l);top:24px;color:#F7F2E4;z-index:5}
 @media (max-width:820px){
   .story-ui{grid-template-columns:1fr;align-content:center;gap:14px;padding-block:64px 28px}
   .story-inset{height:min(34vh,320px);justify-self:start}
@@ -353,22 +350,8 @@ body.reading{overflow:hidden}
 <!-- ============ MY STORY (pinned storyboard; chapters live in STORY below) ============ -->
 <section class="pin" id="story" style="--n:7" data-seq="story">
   <div class="pin-stage">
-    <div class="story-bg ph" id="story-bg"></div>
-    <div class="story-veil"></div>
     <p class="label story-section-label">My story</p>
-    <div class="story-ui wrap">
-      <div class="story-left">
-        <span class="ch" id="story-ch">Chapter 01</span>
-        <h3 id="story-title"></h3>
-        <p id="story-text"></p>
-      </div>
-      <div class="story-inset ph" id="story-inset"><img id="story-img" alt=""></div>
-      <div class="story-right">
-        <span class="story-count" id="story-count"></span>
-        <span id="story-cap"></span>
-        <span class="story-ticks" id="story-ticks"></span>
-      </div>
-    </div>
+    <div class="story-book" id="story-book"></div>
   </div>
 </section>
 
@@ -727,32 +710,49 @@ body.reading{overflow:hidden}
   });
 
   /* ---------- My story chapters ---------- */
-  var ticks = $('story-ticks');
-  STORY.forEach(function(){ ticks.appendChild(document.createElement('i')); });
-  $('story').style.setProperty('--n', STORY.length);
-  function setStory(i){
-    var s = STORY[i], bg = $('story-bg'), inset = $('story-inset'), im = $('story-img');
-    bg.style.setProperty('--o', s.o); inset.style.setProperty('--o', s.o + 25);
-    if(s.img){
-      im.src = s.img; im.style.setProperty('--pos', s.pos || '50% 30%'); inset.removeAttribute('data-slot');
-    } else {
-      im.removeAttribute('src'); inset.setAttribute('data-slot', '[Photo]');
-    }
-    $('story-ch').textContent = 'Chapter ' + String(i+1).padStart(2,'0');
-    $('story-title').textContent = s.t; $('story-text').textContent = s.p; $('story-cap').textContent = s.c;
-    $('story-count').textContent = String(i+1).padStart(2,'0') + ' / ' + String(STORY.length).padStart(2,'0');
-    ticks.querySelectorAll('i').forEach(function(t,j){ t.classList.toggle('on', j===i); });
-    var prev = setStory.cur; setStory.cur = i;
-    if(prev !== undefined && prev !== i){
-      var cls = i > prev ? 'slide-up' : 'slide-down';
-      document.querySelectorAll('.story-left, .story-inset, .story-right').forEach(function(el){
-        el.classList.remove('slide-up', 'slide-down'); void el.offsetWidth; el.classList.add(cls);
-      });
-    }
+  var book = $('story-book'), NS = STORY.length, pad2 = function(n){ return String(n).padStart(2,'0'); };
+  $('story').style.setProperty('--n', NS);
+  var pages = STORY.map(function(s, i){
+    var pg = document.createElement('div'); pg.className = 'story-page'; pg.style.zIndex = i + 1;
+    if(i) pg.setAttribute('aria-hidden', 'true');
+    var ticksH = STORY.map(function(_, j){ return '<i' + (j === i ? ' class="on"' : '') + '></i>'; }).join('');
+    pg.innerHTML =
+      '<div class="story-bg ph" style="--o:' + s.o + '"></div><div class="story-veil"></div>' +
+      '<div class="story-ui wrap"><div class="story-left"><span class="ch">Chapter ' + pad2(i+1) + '</span><h3></h3><p></p></div>' +
+      '<div class="story-inset ph" style="--o:' + (s.o + 25) + '"' + (s.img ? '' : ' data-slot="[Photo]"') + '>' +
+        (s.img ? '<img alt="" style="--pos:' + (s.pos || '50% 30%') + '">' : '') + '</div>' +
+      '<div class="story-right"><span class="story-count">' + pad2(i+1) + ' / ' + pad2(NS) + '</span><span class="cap"></span>' +
+      '<span class="story-ticks">' + ticksH + '</span></div></div><div class="story-shade"></div>';
+    pg.querySelector('h3').textContent = s.t; pg.querySelector('.story-left p').textContent = s.p;
+    pg.querySelector('.cap').textContent = s.c;
+    if(s.img) pg.querySelector('img').src = s.img;
+    book.appendChild(pg);
+    return pg;
+  });
+  var storyCur = -1;
+  function storyScrub(){
+    var r = $('story').getBoundingClientRect(), span = Math.max(1, r.height - innerHeight);
+    var p = clamp(-r.top / span) * (NS - 1), k = Math.min(NS - 1, Math.floor(p)), f = p - k;
+    f = clamp((f - .12) / .88);                      /* brief rest on each page before the next one starts to come in */
+    var e = f * f * (3 - 2 * f);                     /* soft start and landing */
+    pages.forEach(function(pg, j){
+      var t = 'none', sh = 0, vis = j === k || (j === k + 1 && f > 0);
+      if(j < k){ t = reduce ? 'none' : 'translate3d(-18%,0,0)'; sh = .5; }
+      else if(j === k){ if(!reduce && f > 0) t = 'translate3d(' + (-18 * e) + '%,0,0)'; sh = .5 * e; }
+      else if(j === k + 1){
+        if(reduce) t = f < .5 ? 'translate3d(100%,0,0)' : 'none';
+        else if(e < 1) t = 'translate3d(' + (100 * (1 - e)) + '%,0,0) rotateY(' + (-14 * (1 - e)) + 'deg)';
+      }
+      else t = 'translate3d(100%,0,0)';
+      pg.style.transform = t; pg.style.visibility = vis ? 'visible' : 'hidden';
+      pg.querySelector('.story-shade').style.opacity = sh;
+    });
+    var shown = f >= .5 && k + 1 < NS ? k + 1 : k;
+    if(shown !== storyCur){ storyCur = shown; pages.forEach(function(pg, j){ pg.toggleAttribute('aria-hidden', j !== shown); }); }
   }
 
   /* ---------- Pinned sequences ---------- */
-  var SEQ = {story:{n:STORY.length, set:setStory, cur:-1}};
+  var SEQ = {};
   function seqIndex(key){
     var el = document.querySelector('[data-seq="'+key+'"]'), r = el.getBoundingClientRect();
     var p = clamp(-r.top / Math.max(1, r.height - innerHeight));
@@ -764,7 +764,7 @@ body.reading{overflow:hidden}
     scrollTo({top:y, behavior: reduce ? 'auto' : 'smooth'});
   }
   function tick(){
-    Object.keys(SEQ).forEach(function(k){ var i = seqIndex(k); if(i !== SEQ[k].cur){ SEQ[k].cur = i; SEQ[k].set(i); } });
+    storyScrub();
     revealAll();
     if(typeof riseAll === 'function') riseAll();
     riseWork();
