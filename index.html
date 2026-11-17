@@ -93,6 +93,13 @@ button{font:inherit;color:inherit}
 
 /* ---------------- Pinned sequences (My works + Music) ---------------- */
 .pin{position:relative;height:calc(var(--n) * 85vh + 100vh)}
+/* My story: a new chapter every ~third of a screen of scrolling */
+#story{height:calc(var(--n) * 36vh + 100vh)}
+.story-hint{position:absolute;left:50%;bottom:clamp(14px,3vh,28px);transform:translateX(-50%);z-index:2;color:#F7F2E4;font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.85;transition:opacity .4s ease;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+.story-hint i{font-style:normal;font-size:16px;animation:hintbob 1.4s ease-in-out infinite}
+@keyframes hintbob{50%{transform:translateY(5px)}}
+.story-hint.off{opacity:0}
+@media (prefers-reduced-motion:reduce){.story-hint i{animation:none}}
 .pin-stage{position:sticky;top:env(safe-area-inset-top,0px);height:100vh;height:100svh;overflow:hidden}
 
 /* My works: category tabs, large lead image + copy, filmstrip running off the bottom */
@@ -347,6 +354,7 @@ body.reading{overflow:hidden}
     <div class="story-bg ph" id="story-bg"></div>
     <div class="story-veil"></div>
     <p class="label story-section-label">My story</p>
+    <p class="story-hint" id="story-hint" aria-hidden="true">Keep scrolling <i>↓</i></p>
     <div class="story-ui wrap">
       <div class="story-left">
         <span class="ch" id="story-ch">Chapter 01</span>
@@ -495,7 +503,7 @@ body.reading{overflow:hidden}
     ['Arts Endorsement','2026',-120,'arts-endorsement-waterfall-3-e.webp','50% 50%'],
     ['BU Presidential Scholar','2026',140,'bu-presidential-2-e.webp','50% 30%'],
     ['Excellence in Greek, Paideia of Maine','2024',40,'greek-excellence-e.webp','50% 35%'],
-    ['Maine State Girls Tennis Champion','2025',100,'tennis-state-champs-e.webp','50% 30%']
+    ['Maine State Girls Tennis Champion','2025',100,'tennis-hd-b-e.webp','50% 30%']
   ];
 
   /* ---------- Word-by-word reveal (About) ---------- */
@@ -733,6 +741,7 @@ body.reading{overflow:hidden}
     $('story-title').textContent = s.t; $('story-text').textContent = s.p; $('story-cap').textContent = s.c;
     $('story-count').textContent = String(i+1).padStart(2,'0') + ' / ' + String(STORY.length).padStart(2,'0');
     ticks.querySelectorAll('i').forEach(function(t,j){ t.classList.toggle('on', j===i); });
+    $('story-hint').classList.toggle('off', i === STORY.length - 1);
     inset.style.transform = reduce ? 'none' : 'translateX('+((i%2?1:-1)*12)+'px)';
   }
 
