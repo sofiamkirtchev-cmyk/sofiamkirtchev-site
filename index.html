@@ -608,7 +608,6 @@ body.reading{overflow:hidden}
       var a = Math.max(im.naturalWidth / im.naturalHeight, 0.62);
       var wide = a > 1.4, maxW = W * (wide ? 0.97 : 0.8), maxH = H * (wide ? 0.9 : 0.84), w = maxW, h = w / a;
       if(h > maxH){ h = maxH; w = h * a; }
-      if(wide) h = Math.max(h, Math.min(H * 0.44, h * 1.45));   /* zoom in on wide drawings a little: taller print, edges cropped (View full size shows all) */
       pr.style.setProperty('--pw', Math.round(w) + 'px'); pr.style.setProperty('--ph', Math.round(h) + 'px');
     }
     if(im.complete) go(); else im.addEventListener('load', go);
