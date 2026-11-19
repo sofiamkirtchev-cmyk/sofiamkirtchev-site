@@ -136,6 +136,9 @@ button{font:inherit;color:inherit}
 /* each new image wipes up from the bottom of the panel over the previous one */
 .work-img .wi{position:absolute;inset:0;clip-path:inset(100% 0 0 0);transform:scale(1.06);transition:clip-path .75s cubic-bezier(.65,0,.35,1),transform 1.1s cubic-bezier(.2,.7,.2,1)}
 .work-img .wi.in{clip-path:inset(0 0 0 0);transform:none}
+/* wide pieces (architecture drawings) get a landscape card that also uses the empty left column */
+.work-main.wide > .work-gap{display:none}
+.work-main.wide .work-img{grid-column:1 / span 2;aspect-ratio:16/9;height:auto;width:100%;max-height:none;align-self:center;justify-self:stretch}
 .work-copy{display:grid;gap:14px;max-width:26rem;padding-bottom:4px}
 .work-cat{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
 .work-copy h3{font:400 clamp(1.8rem,3vw,2.8rem)/1 var(--f-display);text-transform:uppercase}
@@ -160,6 +163,7 @@ button{font:inherit;color:inherit}
   .work-stage{grid-template-rows:auto auto auto;padding-bottom:24px}
   .work-main{align-content:start;align-items:start}
   .work-img{height:auto;width:min(100%,34vh);max-height:none}
+  .work-main.wide .work-img{grid-column:auto;width:100%;aspect-ratio:4/3}
   .work-copy{max-width:none;gap:10px}
   .strip{margin-bottom:0}
 }
@@ -432,9 +436,9 @@ body.reading{overflow:hidden}
     {c:'Illustration', t:'Scalping Pikachu', d:'Looking down a dark stairwell, I drew Pikachu running off with a prize he stole from the villains and keeping it for himself.', h:'', o:100,
      img:'scalping-pikachu-v3-e.webp', pos:'50% 50%', alt:'Scalping Pikachu, an illustration by Sofia Kirtchev: Gengar and Pikachu in a dark stairwell under a shattered skylight, framed by a purple and black striped border'},
     {c:'Architecture', t:'Rustic Lakeside House', d:'A house by the water that I designed piece by piece, from the timber frame to the glass wall.', o:200,
-     img:'lakeside-house-elevation.webp', pos:'50% 50%', alt:'Front elevation drawing of a rustic lakeside house designed by Sofia Kirtchev: a timber A-frame with a two-storey glass wall, a turret with a conical roof, and a wraparound deck on diagonal braces'},
+     wide:true, img:'lakeside-house-elevation.webp', pos:'50% 50%', alt:'Front elevation drawing of a rustic lakeside house designed by Sofia Kirtchev: a timber A-frame with a two-storey glass wall, a turret with a conical roof, and a wraparound deck on diagonal braces'},
     {c:'Architecture', t:'Brick Colonial House', d:'A brick colonial house I designed, with white columns, a balcony across the front, and a fountain to greet you.', o:-30,
-     img:'brick-house-elevation.webp', pos:'50% 50%', alt:'Front elevation drawing of a brick colonial house designed by Sofia Kirtchev: a central gable, white columns, a long balcony, a two-car garage, and a tiered fountain'},
+     wide:true, img:'brick-house-elevation.webp', pos:'50% 50%', alt:'Front elevation drawing of a brick colonial house designed by Sofia Kirtchev: a central gable, white columns, a long balcony, a two-car garage, and a tiered fountain'},
     {c:'Poetry', t:'Field Notes on a Body', d:'I used to barge into rooms with finger paint and song. Then the same people I shared that joy with started picking me apart.', o:-90},
     {c:'Music', t:'Where it began', d:'I couldn\u2019t read music yet, so I taped the letter names over the notes and learned it by ear.', o:-120,
      img:'where-it-began-e.webp', pos:'50% 20%', alt:'Sofia as a young girl, laughing while playing her first clarinet'}
@@ -605,7 +609,7 @@ body.reading{overflow:hidden}
     function go(){
       var W = layer.clientWidth, H = layer.clientHeight; if(!W || !im.naturalWidth) return;
       var a = Math.max(im.naturalWidth / im.naturalHeight, 0.62);
-      var maxW = W * 0.8, maxH = H * 0.84, w = maxW, h = w / a;
+      var wide = a > 1.4, maxW = W * (wide ? 0.92 : 0.8), maxH = H * (wide ? 0.88 : 0.84), w = maxW, h = w / a;
       if(h > maxH){ h = maxH; w = h * a; }
       pr.style.setProperty('--pw', Math.round(w) + 'px'); pr.style.setProperty('--ph', Math.round(h) + 'px');
     }
@@ -626,6 +630,7 @@ body.reading{overflow:hidden}
   function setWork(i){
     var w = shown[i], link = $('work-link'), img = $('work-img'); workCur = i;
     /* new image layer wipes up from the bottom; older layers are dropped once it has covered them */
+    document.querySelector('#work .work-main').classList.toggle('wide', !!w.wide);
     var layer = document.createElement('div'), poem = poemFor(w);
     if(w.img){
       layer.className = 'ph wi page'; layer.style.setProperty('--o', w.o);
